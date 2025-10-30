@@ -1,0 +1,23 @@
+image:
+  repository: redis
+  tag: "7"
+  pullPolicy: IfNotPresent
+
+auth:
+  secretName: redis-secret
+
+persistence:
+  enabled: true
+  storageClass: local-path
+  accessModes:
+    - ReadWriteOnce
+  size: 1Gi
+
+service:
+  type: ClusterIP
+  port: 6379
+
+externalService:
+  enabled: true
+  type: NodePort
+  nodePort: 30379

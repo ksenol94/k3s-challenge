@@ -1,0 +1,13 @@
+controller:
+  image: "jenkins/jenkins:lts"
+  adminUser: ""
+  adminPassword: ""
+  serviceType: NodePort
+  nodePort: 32000
+
+persistence:
+  storageClass: local-path
+  accessModes:
+    - ReadWriteOnce
+  size: 5Gi
+  existingClaim: ""

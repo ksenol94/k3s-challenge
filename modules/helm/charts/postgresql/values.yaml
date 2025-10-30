@@ -1,0 +1,32 @@
+image:
+  repository: postgres
+  tag: "15.6"
+  pullPolicy: IfNotPresent
+
+auth:
+  secretName: postgresql-secret
+  username: app
+  password: ""         # helm install sırasında --set auth.password=... ile verin
+  database: appdb
+
+persistence:
+  enabled: true
+  storageClass: local-path
+  accessModes:
+    - ReadWriteOnce
+  size: 5Gi
+
+backup:
+  schedule: "*/5 * * * *"     # test için "*/5 * * * *" kullanabilirsiniz
+  storageClass: local-path
+  size: 2Gi
+  retentionDays: 7
+
+service:
+  type: ClusterIP
+  port: 5432
+
+externalService:
+  enabled: true
+  type: NodePort
+  nodePort: 30432

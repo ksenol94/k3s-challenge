@@ -1,0 +1,6 @@
+apiVersion: v2
+name: postgresql
+description: PostgreSQL with internal daily backup (single PVC)
+type: application
+version: 0.1.0
+appVersion: "15.6"

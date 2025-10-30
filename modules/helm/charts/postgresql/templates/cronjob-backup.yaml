@@ -1,0 +1,56 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgresql-backup
+  labels:
+    app: postgresql
+spec:
+  schedule: "*/5 * * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: pgdump
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              env:
+                - name: POSTGRES_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.auth.secretName }}
+                      key: postgres-user
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.auth.secretName }}
+                      key: postgres-password
+                - name: POSTGRES_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.auth.secretName }}
+                      key: postgres-db
+              command:
+                - /bin/sh
+                - -c
+                - >
+                  echo "[Backup] Waiting for PVC to mount...";
+                  sleep 15;
+                  mkdir -p /var/lib/postgresql/data/backups;
+                  echo "[Backup] Starting pg_dump...";
+                  TS=$(date +%F_%H%M%S);
+                  PGPASSWORD="$POSTGRES_PASSWORD";
+                  pg_dump -h postgresql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc \
+                    > /var/lib/postgresql/data/backups/${TS}.dump;
+                  echo "[Backup] Cleaning old dumps...";
+                  find /var/lib/postgresql/data/backups -type f -mtime +{{ .Values.backup.retentionDays | default 7 }} -delete;
+                  echo "[Backup] Done.";
+              volumeMounts:
+                - name: data
+                  mountPath: /var/lib/postgresql/data
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: data-postgresql-0

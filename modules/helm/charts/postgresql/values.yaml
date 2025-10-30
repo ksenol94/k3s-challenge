@@ -6,7 +6,7 @@ image:
 auth:
   secretName: postgresql-secret
   username: app
-  password: ""         # helm install sırasında --set auth.password=... ile verin
+  password: ""         
   database: appdb
 
 persistence:
@@ -17,7 +17,7 @@ persistence:
   size: 5Gi
 
 backup:
-  schedule: "*/5 * * * *"     # test için "*/5 * * * *" kullanabilirsiniz
+  schedule: "*/5 * * * *"     
   storageClass: local-path
   size: 2Gi
   retentionDays: 7

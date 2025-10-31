@@ -4,8 +4,8 @@ This project automates the setup of a local Kubernetes (K3s) cluster using OpenT
 It provides a fully reproducible DevOps environment on clean Ubuntu VMs with persistent storage, PostgreSQL backups, and Redis caching.
 
 Overview
-	•	Automates K3s master and worker node setup via Terraform and shell scripts.
-	•	Deploys PostgreSQL, Redis, and Jenkins using Helm charts.
+	-	Automates K3s master and worker node setup via Terraform and shell scripts.
+	-	Deploys PostgreSQL, Redis, and Jenkins using Helm charts.
 	•	Secrets and passwords are securely passed through terraform.tfvars.
 	•	Includes CLI test scripts for validating system health and external connectivity.
 	•	Provides a cleanup workflow for complete teardown and re-deployment.
@@ -17,7 +17,7 @@ Requirements
 	•	kubectl and Helm CLI for Kubernetes management.
 	•	psql and redis-cli for external connection testing.
 	•	Optional: Multipass or VirtualBox for VM creation.
-
+-
 Infrastructure Setup
 
 1. Preparation Scripts

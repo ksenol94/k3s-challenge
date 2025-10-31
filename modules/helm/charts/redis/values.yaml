@@ -1,23 +1,20 @@
+# Docker image
 image:
   repository: redis
   tag: "7"
   pullPolicy: IfNotPresent
 
+# Auth
 auth:
-  secretName: redis-secret
+  password: ""
 
-persistence:
-  enabled: true
-  storageClass: local-path
-  accessModes:
-    - ReadWriteOnce
-  size: 1Gi
-
+# Service config
 service:
-  type: ClusterIP
-  port: 6379
-
-externalService:
-  enabled: true
   type: NodePort
+  port: 6379
   nodePort: 30379
+
+# Storage config
+persistence:
+  size: 1Gi
+  storageClass: local-path

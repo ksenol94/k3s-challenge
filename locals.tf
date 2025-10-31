@@ -32,7 +32,7 @@ resource "null_resource" "fix_kubeconfig_server" {
   depends_on = [data.local_file.kubeconfig]
 
   provisioner "local-exec" {
-    command = <<EOT
+    command     = <<EOT
       MASTER_IP=${module.k3s.master_ip}
       if grep -q "127.0.0.1" ${local.kubeconfig_path}; then
         sed -i "s/127\\.0\\.0\\.1/$${MASTER_IP}/g" ${local.kubeconfig_path}

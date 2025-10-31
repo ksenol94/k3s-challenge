@@ -44,17 +44,17 @@ data "local_file" "terraform_token" {
 }
 
 provider "kubernetes" {
-  host     = "https://${local.master_instance.ip}:6443"
-  token    = trim(data.local_file.terraform_token.content, "\n")
+  host        = "https://${local.master_instance.ip}:6443"
+  token       = trim(data.local_file.terraform_token.content, "\n")
   config_path = local.kubeconfig_path
-  insecure = true
+  insecure    = true
 }
 
 provider "helm" {
   kubernetes {
-    host     = "https://${local.master_instance.ip}:6443"
-    token    = trim(data.local_file.terraform_token.content, "\n")
+    host        = "https://${local.master_instance.ip}:6443"
+    token       = trim(data.local_file.terraform_token.content, "\n")
     config_path = local.kubeconfig_path
-    insecure = true
+    insecure    = true
   }
 }

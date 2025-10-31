@@ -1,6 +1,6 @@
 apiVersion: v2
 name: redis
-description: Simple Redis with persistence and optional NodePort
+description: Simple local Redis with password and persistence
 type: application
 version: 0.1.0
 appVersion: "7"

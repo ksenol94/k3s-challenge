@@ -36,11 +36,11 @@ Challenge Requirement Coverage
 
 Completed
 	•	All resources are managed via Git.
-All Terraform, Helm, and shell scripts are version-controlled and can be tracked.
+	All Terraform, Helm, and shell scripts are version-controlled and can be tracked.
 	•	Shell scripts handle installation and dependencies.
-Scripts like prepare_ubuntu.sh, install_k3s_master.sh, and install_k3s_worker.sh automate setup from scratch.
+	Scripts like prepare_ubuntu.sh, install_k3s_master.sh, and install_k3s_worker.sh automate setup from scratch.
 	•	Fully reproducible on clean Ubuntu VMs.
-The entire cluster can be recreated on fresh Ubuntu instances with a single tofu apply.
+	The entire cluster can be recreated on fresh Ubuntu instances with a single tofu apply.
 	•	Kubernetes (K3s) cluster provisioned via Terraform (OpenTofu).
 Both master and worker nodes are provisioned automatically through Terraform modules and scripts.
 	•	Applications deployed via Helm charts.

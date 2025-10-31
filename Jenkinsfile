@@ -2,11 +2,10 @@ pipeline {
     agent any
 
     environment {
-        // Values pulled directly from terraform.tfvars
         TFVARS_PATH = "${WORKSPACE}/terraform.tfvars"
-        PG_PASS = sh(script: "grep postgres_password ${TFVARS_PATH} | awk -F'=' '{print $2}' | tr -d '\"[:space:]'", returnStdout: true).trim()
-        REDIS_PASS = sh(script: "grep redis_password ${TFVARS_PATH} | awk -F'=' '{print $2}' | tr -d '\"[:space:]'", returnStdout: true).trim()
-        MASTER_IP = sh(script: "grep master_ip ${TFVARS_PATH} | awk -F'=' '{print $2}' | tr -d '\"[:space:]'", returnStdout: true).trim()
+        PG_PASS = sh(script: 'grep postgres_password ${TFVARS_PATH} | awk -F"=" "{print \$2}" | tr -d \'"[:space:]"\'', returnStdout: true).trim()
+        REDIS_PASS = sh(script: 'grep redis_password ${TFVARS_PATH} | awk -F"=" "{print \$2}" | tr -d \'"[:space:]"\'', returnStdout: true).trim()
+        MASTER_IP = sh(script: 'grep master_ip ${TFVARS_PATH} | awk -F"=" "{print \$2}" | tr -d \'"[:space:]"\'', returnStdout: true).trim()
     }
 
     stages {

@@ -27,11 +27,11 @@ else
   exit 1
 fi
 
-# === [3] PVC status ===
+# PVC status
 echo "[3] Checking PVC..."
 kubectl get pvc -n infra -l app=redis || echo "[WARN] PVC not found"
 
-# === [4] Pod restart + data persistence ===
+# Pod restart + data persistence
 echo "[4] Restarting Redis pod..."
 POD=$(kubectl get pod -n infra -l app=redis -o jsonpath='{.items[0].metadata.name}')
 kubectl delete pod "$POD" -n infra --wait >/dev/null
@@ -44,7 +44,7 @@ else
   echo "[WARN] Data not persisted after pod restart"
 fi
 
-# === [5] NodePort connectivity ===
+# NodePort connectivity
 echo "[5] Checking NodePort reachability..."
 if nc -zv "$REDIS_HOST" "$REDIS_PORT" >/dev/null 2>&1; then
   echo "[OK] NodePort reachable"

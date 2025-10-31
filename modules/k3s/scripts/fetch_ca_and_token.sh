@@ -12,7 +12,7 @@ TOKEN_PATH="/var/lib/rancher/k3s/server/terraform-token.txt"
 
 echo "[INFO] Fetching CA and Terraform token from master ($HOST)..."
 
-# --- Fetch CA (sudo cat -> local redirect)
+# Fetch CA
 if ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$USER@$HOST" "sudo test -f $CA_PATH"; then
   ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$USER@$HOST" "sudo cat $CA_PATH" > "$LOCAL_CA"
   echo "[OK] CA successfully retrieved → $LOCAL_CA"
@@ -20,7 +20,7 @@ else
   echo "[WARN] CA CA file not found at: $CA_PATH"
 fi
 
-# --- Fetch Token (sudo cat -> local redirect)
+# Fetch Token
 if ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$USER@$HOST" "sudo test -f $TOKEN_PATH"; then
   ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$USER@$HOST" "sudo cat $TOKEN_PATH" > "$LOCAL_TOKEN"
   echo "[OK]  Token successfully retrieved → $LOCAL_TOKEN"

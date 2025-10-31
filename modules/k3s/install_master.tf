@@ -1,5 +1,4 @@
 # Installs and configures K3s master node (Ubuntu prep + K3s setup + token creation)
-
 resource "null_resource" "k3s_master_install" {
   triggers = {
     master_ip      = var.master.ip

@@ -1,6 +1,6 @@
 apiVersion: v2
 name: postgresql
-description: PostgreSQL with internal daily backup (single PVC)
+description: Simple local PostgreSQL with password, persistence and daily backups
 type: application
 version: 0.1.0
-appVersion: "15.6"
+appVersion: "15"

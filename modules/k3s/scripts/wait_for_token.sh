@@ -10,12 +10,12 @@ echo "[INFO] Waiting for Terraform token to appear at: $TOKEN_PATH"
 count=0
 while [ ! -s "$TOKEN_PATH" ]; do
   if [ $count -ge "$TIMEOUT" ]; then
-    echo "HATA: Token ${TIMEOUT} saniyede oluşturulamadı." >&2
+    echo "ERROR: Token was not created within ${TIMEOUT} seconds." >&2
     exit 1
   fi
-  echo "[WAIT] Token oluşturulması bekleniyor... (${count}s)"
+  echo "[WAIT] Waiting for token creation... (${count}s)"
   sleep "$INTERVAL"
   count=$((count + INTERVAL))
 done
 
-echo "[OK] Token bulundu: $TOKEN_PATH"
+echo "[OK] Token found: $TOKEN_PATH"

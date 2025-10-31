@@ -4,7 +4,6 @@ resource "helm_release" "postgresql" {
   chart      = "${path.module}/charts/postgresql"
   version    = "0.1.0"
 
-  # Stabil & idempotent davranış
   recreate_pods              = true
   replace                    = true
   force_update               = true
@@ -16,27 +15,10 @@ resource "helm_release" "postgresql" {
 
   values = [file("${path.module}/charts/postgresql/values.yaml")]
 
-  # NodePort dış erişim (örn: 30432)
-  set {
-    name  = "service.type"
-    value = "NodePort"
-  }
-  set {
-    name  = "service.nodePort"
-    value = "30432"
-  }
-
-  # Şifre sadece Terraform’dan (manifestlere yazılmaz)
   set_sensitive {
     name  = "auth.password"
     value = var.postgres_password
   }
 
-  depends_on = [
-    kubernetes_namespace.infra
-  ]
-
-  lifecycle {
-    ignore_changes = [status]
-  }
+  depends_on = [kubernetes_namespace.infra]
 }

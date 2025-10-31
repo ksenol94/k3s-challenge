@@ -5,11 +5,11 @@ metadata:
   labels:
     app: postgresql
 spec:
-  type: NodePort
+  type: {{ .Values.service.type }}
   ports:
     - name: postgres
-      port: 5432
+      port: {{ .Values.service.port }}
       targetPort: 5432
-      nodePort: 30432
+      nodePort: {{ .Values.service.nodePort }}
   selector:
     app: postgresql

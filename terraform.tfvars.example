@@ -1,0 +1,26 @@
+# Defines node configuration and Helm credentials for local K3s deployment.
+instances = [
+  {
+    name        = "k3s-master"
+    ip          = "<master-ip>"
+    ssh_user    = "ubuntu"
+    private_key = "<ssh-key>"
+    role        = "master"
+  },
+  {
+    name        = "k3s-worker1"
+    ip          = "<worker-ip>"
+    ssh_user    = "ubuntu"
+    private_key = "<ssh-key>"
+    role        = "worker"
+  }
+]
+ 
+kubeconfig_path = "./.work"
+ 
+# Helm Component Secrets (Example passwords)
+postgres_user      = "postgres"
+postgres_password  = "postgres123"
+redis_password     = "redis123"
+jenkins_admin_user = "admin"
+jenkins_admin_pass = "jenkins123"

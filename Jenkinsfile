@@ -1,45 +1,70 @@
 pipeline {
-  agent any
-  environment {
-    KUBECONFIG = "/var/jenkins_home/.kube/config"
-  }
-  stages {
-    stage('Init') {
-      steps {
-        sh 'echo "Pipeline started"'
-      }
+    agent any
+
+    environment {
+        // Values pulled directly from terraform.tfvars
+        TFVARS_PATH = "${WORKSPACE}/terraform.tfvars"
+        PG_PASS = sh(script: "grep postgres_password ${TFVARS_PATH} | awk -F'=' '{print $2}' | tr -d '\"[:space:]'", returnStdout: true).trim()
+        REDIS_PASS = sh(script: "grep redis_password ${TFVARS_PATH} | awk -F'=' '{print $2}' | tr -d '\"[:space:]'", returnStdout: true).trim()
+        MASTER_IP = sh(script: "grep master_ip ${TFVARS_PATH} | awk -F'=' '{print $2}' | tr -d '\"[:space:]'", returnStdout: true).trim()
     }
-    stage('Terraform Apply') {
-      steps {
-        sh '''
-          cd infra
-          tofu init -input=false
-          tofu apply -auto-approve
-        '''
-      }
+
+    stages {
+        stage('Init') {
+            steps {
+                echo "✅ Jenkins CI initialized"
+                sh 'echo "[INFO] Jenkins started pipeline on $(date)"'
+            }
+        }
+
+        stage('Verify PostgreSQL') {
+            steps {
+                echo "🔍 Checking PostgreSQL connection..."
+                sh '''
+                    kubectl -n infra get pods -l app=postgres
+                    export PGPASSWORD=${PG_PASS}
+                    psql "postgresql://postgres:${PG_PASS}@${MASTER_IP}:30432/postgres" -c "SELECT version();"
+                '''
+            }
+        }
+
+        stage('Verify Redis') {
+            steps {
+                echo "🔍 Checking Redis connection..."
+                sh '''
+                    kubectl -n infra get pods -l app=redis
+                    redis-cli -h ${MASTER_IP} -p 30379 -a "${REDIS_PASS}" PING
+                '''
+            }
+        }
+
+        stage('Validate Helm Releases') {
+            steps {
+                echo "📦 Checking Helm deployments..."
+                sh '''
+                    helm list -A
+                    kubectl get pods -A
+                '''
+            }
+        }
+
+        stage('PostgreSQL Backup Check') {
+            steps {
+                echo "💾 Verifying scheduled PostgreSQL backups..."
+                sh '''
+                    kubectl -n infra get cronjob postgresql-backup
+                    kubectl -n infra get jobs | grep postgresql-backup || true
+                '''
+            }
+        }
     }
-    stage('Verify Services') {
-      steps {
-        sh '''
-          echo "[PostgreSQL Test]"
-          psql "postgresql://postgres:postgres123@192.168.64.22:30432/appdb" -c "SELECT 1;"
-          echo "[Redis Test]"
-          redis-cli -h 192.168.64.22 -p 30379 -a redis123 ping
-          echo "[Jenkins Access]"
-          curl -sI http://192.168.64.22:32000 | grep "X-Jenkins"
-        '''
-      }
+
+    post {
+        success {
+            echo "🎉 CI pipeline completed successfully!"
+        }
+        failure {
+            echo "❌ CI pipeline failed. Check logs above."
+        }
     }
-    stage('Verify Backups') {
-      steps {
-        sh '''
-          kubectl --insecure-skip-tls-verify=true -n infra exec -it statefulset/postgresql -- ls /var/lib/postgresql/data/backups || true
-        '''
-      }
-    }
-  }
-  post {
-    success { echo "✅ Challenge pipeline completed successfully!" }
-    failure { echo "❌ Pipeline failed!" }
-  }
 }

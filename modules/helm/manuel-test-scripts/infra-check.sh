@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Locate terraform.tfvars dynamically (project root)
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../" && pwd)"
 TFVARS_FILE="${TFVARS_FILE:-${ROOT_DIR}/terraform.tfvars}"
 
 # Extract credentials from terraform.tfvars

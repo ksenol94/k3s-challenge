@@ -1,13 +1,24 @@
-controller:
-  image: "jenkins/jenkins:lts"
-  adminUser: ""
-  adminPassword: ""
-  serviceType: NodePort
+image:
+  repository: jenkins/jenkins
+  tag: 2.479-jdk17
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 8080
   nodePort: 32000
 
-persistence:
-  storageClass: local-path
-  accessModes:
-    - ReadWriteOnce
-  size: 5Gi
-  existingClaim: ""
+auth:
+  adminUser: ""
+  adminPassword: ""
+
+installPlugins:
+  - git:5.5.2
+  - workflow-aggregator:596.v8c21c963d92d
+  - pipeline-model-definition:2.2251.vb_921a_28a_f147
+  - pipeline-stage-view:2.33
+  - blueocean:1.27.13
+  - credentials-binding:681.vf91669a_32e45
+  - docker-workflow:572.v950f58993843
+  - timestamper:1.26
+  - job-dsl:1.89

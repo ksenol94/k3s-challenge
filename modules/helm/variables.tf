@@ -5,13 +5,12 @@ variable "redis_password" {
   description = "Redis password"
 }
 
-variable "jenkins_admin_user" {
+variable "jenkins_user" {
   type        = string
   description = "Jenkins admin username"
-  default     = "admin"
 }
 
-variable "jenkins_admin_pass" {
+variable "jenkins_password" {
   type        = string
   sensitive   = true
   description = "Jenkins admin password"

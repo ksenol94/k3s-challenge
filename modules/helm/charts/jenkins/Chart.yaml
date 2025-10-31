@@ -1,6 +1,5 @@
 apiVersion: v2
 name: jenkins
-description: Jenkins CI/CD server (simple local setup)
-type: application
+description: Local Jenkins deployment for DevOps Challenge
 version: 0.1.0
-appVersion: "2.452"
+appVersion: "2.479"

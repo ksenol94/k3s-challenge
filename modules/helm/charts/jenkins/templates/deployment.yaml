@@ -14,31 +14,54 @@ spec:
       labels:
         app: jenkins
     spec:
+      initContainers:
+        - name: install-plugins
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "[INFO] Installing Jenkins plugins into /var/jenkins_home/plugins ..."
+              mkdir -p /var/jenkins_home/plugins
+              jenkins-plugin-cli --plugin-download-directory /var/jenkins_home/plugins \
+                --plugins \
+                git \
+                workflow-aggregator \
+                pipeline-model-definition \
+                pipeline-stage-view \
+                blueocean \
+                credentials-binding \
+                docker-workflow \
+                timestamper \
+                job-dsl
+              echo "[DONE] Plugins installed."
+          volumeMounts:
+            - name: jenkins-home
+              mountPath: /var/jenkins_home
+
       containers:
         - name: jenkins
-          image: "{{ .Values.controller.image }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - name: http
-              containerPort: 8080
-            - name: agent
-              containerPort: 50000
+            - containerPort: 8080
           env:
-            - name: JAVA_OPTS
-              value: "-Djenkins.install.runSetupWizard=false"
             - name: JENKINS_ADMIN_ID
               valueFrom:
                 secretKeyRef:
                   name: jenkins-secret
-                  key: jenkins-admin-user
+                  key: admin-user
             - name: JENKINS_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: jenkins-secret
-                  key: jenkins-admin-password
+                  key: admin-password
+            - name: JAVA_OPTS
+              value: "-Djenkins.install.runSetupWizard=false"
           volumeMounts:
             - name: jenkins-home
               mountPath: /var/jenkins_home
+
       volumes:
         - name: jenkins-home
-          persistentVolumeClaim:
-            claimName: jenkins-pvc
+          emptyDir: {}

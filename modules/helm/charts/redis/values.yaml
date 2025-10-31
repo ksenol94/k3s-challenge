@@ -1,20 +1,16 @@
-# Docker image
 image:
   repository: redis
   tag: "7"
   pullPolicy: IfNotPresent
 
-# Auth
 auth:
   password: ""
 
-# Service config
 service:
   type: NodePort
   port: 6379
   nodePort: 30379
 
-# Storage config
 persistence:
   size: 1Gi
   storageClass: local-path

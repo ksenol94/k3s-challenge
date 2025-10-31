@@ -33,13 +33,13 @@ variable "redis_password" {
   sensitive   = true
 }
 
-variable "jenkins_admin_user" {
+variable "jenkins_user" {
   description = "Jenkins admin username"
   type        = string
   default     = "admin"
 }
 
-variable "jenkins_admin_pass" {
+variable "jenkins_password" {
   description = "Jenkins admin password"
   type        = string
   sensitive   = true

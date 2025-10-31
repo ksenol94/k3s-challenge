@@ -5,11 +5,10 @@ metadata:
   labels:
     app: jenkins
 spec:
-  type: NodePort
+  type: {{ .Values.service.type }}
   ports:
-    - name: http
-      port: 8080
-      targetPort: http
-      nodePort: {{ .Values.controller.nodePort }}
+    - port: {{ .Values.service.port }}
+      targetPort: 8080
+      nodePort: {{ .Values.service.nodePort }}
   selector:
     app: jenkins

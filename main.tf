@@ -17,8 +17,8 @@ module "helm" {
   source = "./modules/helm"
 
   redis_password     = var.redis_password
-  jenkins_admin_user = var.jenkins_admin_user
-  jenkins_admin_pass = var.jenkins_admin_pass
+  jenkins_user = var.jenkins_user
+  jenkins_password = var.jenkins_password
   postgres_user      = var.postgres_user
   postgres_password  = var.postgres_password
 

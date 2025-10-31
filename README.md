@@ -69,4 +69,4 @@ This project delivers a secure, fully automated, and reproducible DevOps infrast
 From VM preparation to service validation, every stage—setup, testing, and cleanup—is fully automated using Terraform, Helm, and shell scripting.
 
 
-
+.

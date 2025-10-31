@@ -29,6 +29,7 @@ module "helm" {
 
   depends_on = [
     module.k3s,
-    null_resource.wait_for_token
+    null_resource.wait_for_token,
+    null_resource.fix_kubeconfig_server
   ]
 }

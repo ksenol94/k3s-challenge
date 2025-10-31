@@ -8,3 +8,7 @@ output "kubeconfig_dir" {
   description = "Local directory where kubeconfig, CA, and token files are stored"
   value       = var.kubeconfig_path
 }
+
+output "master_ip" {
+  value = var.master.ip
+}

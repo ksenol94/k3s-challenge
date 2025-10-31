@@ -3,21 +3,6 @@ set -euo pipefail
 
 echo "[Uninstall] Starting full K3s cleanup..."
 
-if command -v k3s >/dev/null 2>&1 && sudo k3s kubectl get nodes >/dev/null 2>&1; then
-  echo "[Cleanup] Deleting Kubernetes PVCs and PVs via kubectl..."
-  sudo k3s kubectl delete pvc --all -A --ignore-not-found || true
-  sudo k3s kubectl delete pv --all --ignore-not-found || true
-
-  echo "[Cleanup] Deleting leftover Namespaces and Helm releases..."
-  sudo k3s kubectl delete ns apps infra --ignore-not-found || true
-  sudo k3s kubectl delete ns kube-system --ignore-not-found || true
-
-  echo "[Cleanup] Waiting briefly for API resource cleanup..."
-  sleep 5
-else
-  echo "[Cleanup] K3s API not accessible — proceeding with manual file cleanup..."
-fi
-
 echo "[Uninstall] Removing K3s services..."
 if [ -f /usr/local/bin/k3s-uninstall.sh ]; then
   sudo /usr/local/bin/k3s-uninstall.sh || true

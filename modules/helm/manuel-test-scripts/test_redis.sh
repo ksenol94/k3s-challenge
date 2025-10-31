@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-#########################################
-# REDIS FUNCTIONAL VALIDATION SCRIPT
-#########################################
-
 REDIS_HOST="${1:-192.168.64.22}"
-REDIS_PORT="${2:-30079}"
+REDIS_PORT="${2:-30379}"
 REDIS_PASS="${3:-redis123}"
 
 echo "[INFO] Testing Redis at ${REDIS_HOST}:${REDIS_PORT}"

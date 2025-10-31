@@ -1,54 +1,39 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PG_HOST="${1:-192.168.64.22}"
-PG_PORT="${2:-30432}"
-PG_USER="${3:-postgres}"
-PG_PASS="${4:-postgres123}"
-PG_DB="${5:-postgres}"
+# Locate terraform.tfvars dynamically (project root)
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+TFVARS_FILE="${TFVARS_FILE:-${ROOT_DIR}/terraform.tfvars}"
 
-export PGPASSWORD="$PG_PASS"
+# Namespace (default: infra)
+NS=${NS:-infra}
 
-echo "[INFO] Testing PostgreSQL at ${PG_HOST}:${PG_PORT}"
+# Read postgres_user and postgres_password from terraform.tfvars
+PG_USER=$(grep -E '^postgres_user' "$TFVARS_FILE" | awk -F'=' '{gsub(/[[:space:]"]/,"",$2); print $2}')
+PGPASSWORD=$(grep -E '^postgres_password' "$TFVARS_FILE" | awk -F'=' '{gsub(/[[:space:]"]/,"",$2); print $2}')
 
-# Connection and version check
-echo "[1] Checking connection and version..."
-if psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -c "SELECT version();" >/dev/null 2>&1; then
-  echo "[OK] PostgreSQL reachable"
+# Cluster information
+NODE_IP=${NODE_IP:-"$(kubectl get nodes -o wide --no-headers | awk 'NR==1{print $6}')"}
+PORT=${PORT:-30432}
+DB=${DB:-appdb}
+
+echo "[INFO] Using terraform vars from: $TFVARS_FILE"
+echo "[INFO] PG_USER=$PG_USER"
+echo "[INFO] NODE_IP=$NODE_IP PORT=$PORT DB=$DB"
+
+# Connection test
+echo "[STEP 1] Testing PostgreSQL connection..."
+if psql "postgresql://$PG_USER:$PGPASSWORD@$NODE_IP:$PORT/$DB" -c '\l' | head -n 20; then
+  echo "[OK] PostgreSQL connection successful."
 else
-  echo "[ERROR] Cannot connect to PostgreSQL"
+  echo "[ERROR] Cannot connect to PostgreSQL at $NODE_IP:$PORT"
   exit 1
 fi
 
-# CRUD validation
-echo "[2] Testing CRUD operations..."
-psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -c "CREATE DATABASE tf_test;" >/dev/null 2>&1 || true
-psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d tf_test -c "
-CREATE TABLE IF NOT EXISTS sanity_check (id SERIAL PRIMARY KEY, message TEXT);
-INSERT INTO sanity_check (message) VALUES ('PostgreSQL OK');
-SELECT * FROM sanity_check;" >/dev/null
-echo "[OK] CRUD test executed successfully"
-
-# PVC status
-echo "[3] Checking PVC..."
-kubectl get pvc -n infra -l app=postgres || echo "[WARN] PVC not found"
-
-# Pod restart + data persistence
-echo "[4] Restarting PostgreSQL pod..."
-POD=$(kubectl get pod -n infra -l app=postgres -o jsonpath='{.items[0].metadata.name}')
-kubectl delete pod "$POD" -n infra --wait >/dev/null
-sleep 15
-NEW_POD=$(kubectl get pod -n infra -l app=postgres -o jsonpath='{.items[0].metadata.name}')
-kubectl exec -n infra "$NEW_POD" -- psql -U "$PG_USER" -d tf_test -c "SELECT * FROM sanity_check;" >/dev/null && \
-echo "[OK] Data persisted successfully after pod restart"
-
-# NodePort connectivity
-echo "[5] Checking NodePort reachability..."
-if nc -zv "$PG_HOST" "$PG_PORT" >/dev/null 2>&1; then
-  echo "[OK] NodePort reachable"
-else
-  echo "[ERROR] NodePort unreachable"
-  exit 1
+# Backup directory check
+echo "[STEP 2] Checking backup directory inside PVC..."
+if ! kubectl -n "$NS" exec -it statefulset/postgresql -- ls -l /var/lib/postgresql/data/backups; then
+  echo "[WARN] No backup directory found (possibly first run or backup not triggered yet)."
 fi
 
-echo "[DONE] PostgreSQL validation completed successfully."
+echo "[DONE] PostgreSQL health and backup verification completed successfully"

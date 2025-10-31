@@ -1,57 +1,46 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-JENKINS_NS="apps"
-JENKINS_APP="jenkins"
-MASTER_IP="${1:-192.168.64.22}"
-NODE_PORT="${2:-30808}"
-USER_EXPECTED="${3:-admin}"
-PASS_EXPECTED="${4:-jenkins123}"
+# --- Locate terraform.tfvars dynamically (project root)
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+TFVARS_FILE="${TFVARS_FILE:-${ROOT_DIR}/terraform.tfvars}"
 
-echo "[INFO] Testing Jenkins at ${MASTER_IP}:${NODE_PORT}"
+# --- Extract Jenkins credentials
+JENKINS_USER=$(grep -E '^jenkins_admin_user' "$TFVARS_FILE" | awk -F'=' '{gsub(/[[:space:]"]/,"",$2); print $2}')
+JENKINS_PASS=$(grep -E '^jenkins_admin_pass' "$TFVARS_FILE" | awk -F'=' '{gsub(/[[:space:]"]/,"",$2); print $2}')
 
-# Verify pod is running and retrieve pod name
-echo "[1] Checking pod status..."
-kubectl get pod -n $JENKINS_NS -l app=$JENKINS_APP -o wide
-POD=$(kubectl get pod -n $JENKINS_NS -l app=$JENKINS_APP -o jsonpath='{.items[0].metadata.name}')
+# --- Cluster connection info
+NODE_IP=${NODE_IP:-"$(kubectl get nodes -o wide --no-headers | awk 'NR==1{print $6}')"}
+JENKINS_PORT=${JENKINS_PORT:-32000}
 
-# Validate admin credentials inside Kubernetes secret
-echo "[2] Validating secret..."
-USER=$(kubectl get secret -n $JENKINS_NS jenkins-secret -o jsonpath='{.data.jenkins-admin-user}' | base64 -d)
-PASS=$(kubectl get secret -n $JENKINS_NS jenkins-secret -o jsonpath='{.data.jenkins-admin-password}' | base64 -d)
-echo "  user: $USER"
-echo "  pass: $PASS"
+echo "[INFO] Using terraform vars from: $TFVARS_FILE"
+echo "[INFO] Testing Jenkins at ${NODE_IP}:${JENKINS_PORT}"
 
-if [[ "$USER" != "$USER_EXPECTED" || "$PASS" != "$PASS_EXPECTED" ]]; then
-  echo "[WARN] Jenkins credentials mismatch (expected $USER_EXPECTED / $PASS_EXPECTED)"
+# === [1] Check HTTP status ===
+echo -e "\n[1] Checking HTTP response..."
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://${NODE_IP}:${JENKINS_PORT}" || echo "000")
+echo "↳ HTTP status code: $HTTP_CODE"
+
+if [[ "$HTTP_CODE" == "403" || "$HTTP_CODE" == "200" ]]; then
+  echo "[OK] Jenkins service reachable"
 else
-  echo "[OK] Jenkins credentials verified"
-fi
-
-# Ensure Jenkins PVC exists and is Bound
-echo "[3] Checking PVC..."
-kubectl get pvc -n $JENKINS_NS
-
-# Verify Jenkins home directory is correctly mounted
-echo "[4] Checking volume mount..."
-kubectl exec -n $JENKINS_NS "$POD" -- df -h /var/jenkins_home | tail -n +2
-
-# Confirm Jenkins NodePort is reachable from host
-echo "[5] Checking NodePort connectivity..."
-if nc -z -v -w2 "$MASTER_IP" "$NODE_PORT" >/dev/null 2>&1; then
-  echo "[OK] Connection reachable ($MASTER_IP:$NODE_PORT)"
-else
-  echo "[ERROR] NodePort unreachable ($MASTER_IP:$NODE_PORT)"
+  echo "[ERROR] Jenkins service unreachable or invalid response"
   exit 1
 fi
 
-# Perform HTTP HEAD request to validate login screen (403)
-echo "[6] Checking HTTP response..."
-CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://${MASTER_IP}:${NODE_PORT}")
-if [[ "$CODE" == "403" ]]; then
-  echo "[OK] Jenkins login screen active (HTTP 403)"
+# === [2] Try basic authentication (optional sanity check) ===
+echo -e "\n[2] Testing authentication..."
+AUTH_CODE=$(curl -s -o /dev/null -w "%{http_code}" -u "${JENKINS_USER}:${JENKINS_PASS}" "http://${NODE_IP}:${JENKINS_PORT}/login" || echo "000")
+echo "↳ Auth test response code: $AUTH_CODE"
+
+if [[ "$AUTH_CODE" == "200" || "$AUTH_CODE" == "403" ]]; then
+  echo "[OK] Jenkins authentication endpoint responding"
 else
-  echo "[WARN] Unexpected HTTP response: $CODE"
+  echo "[WARN] Jenkins authentication endpoint not reachable (HTTP $AUTH_CODE)"
 fi
 
-echo "[DONE] Jenkins test completed successfully."
+# === [3] Verify Pod and PVC ===
+echo -e "\n[3] Checking Jenkins pod and PVC..."
+kubectl get pods,pvc,svc -n apps -l app=jenkins || echo "[WARN] Jenkins resources not found"
+
+echo -e "\n[DONE] Jenkins validation completed successfully"

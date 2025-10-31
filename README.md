@@ -59,7 +59,11 @@ Challenge Requirement Coverage
  -	PostgreSQL backup management. The CronJob for automated backups runs every 5 minutes (for testing) and logs successful runs.However, backup file persistence under /backups is pending verification.
  -	Jenkins pipeline configuration. Jenkins is deployed and accessible, but pipeline setup and automated build triggers have not been implemented yet.
 
-	Summary
+
+	
+
+Summary
+
 This project delivers a secure, fully automated, and reproducible DevOps infrastructure on Kubernetes (K3s).
 
 From VM preparation to service validation, every stage—setup, testing, and cleanup—is fully automated using Terraform, Helm, and shell scripting.

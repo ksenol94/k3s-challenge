@@ -18,6 +18,6 @@ persistence:
   size: 5Gi
 
 backup:
-  schedule: "*/5 * * * *"   # Taking backup every 5 minutes now. For case, change value to "0 2 * * *"
+  schedule: "0 0 * * *"   # For tests change value to "*/5 * * * *" 
   retentionDays: 7
   path: /var/lib/postgresql/data/backups  

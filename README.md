@@ -4,6 +4,8 @@ This project automates the setup of a local Kubernetes (K3s) cluster using OpenT
 
 It provides a fully reproducible DevOps environment on clean Ubuntu VMs with persistent storage, PostgreSQL backups, and Redis caching.
 
+I used ChatGPT Pro Plan for helper AI Tool.
+
 Overview
 -	Automates K3s master and worker node setup via Terraform and shell scripts.
 -	Deploys PostgreSQL, Redis, and Jenkins using Helm charts.

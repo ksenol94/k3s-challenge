@@ -36,22 +36,21 @@ pipeline {
                     echo "[INFO] Listing PostgreSQL pods..."
                     kubectl -n infra get pods -l app=postgresql
 
-                    echo "[INFO] Testing PostgreSQL connection..."
-                    export PGPASSWORD=${PG_PASS}
-
-                    # Cluster içi DNS üzerinden test
-                    if ! psql "postgresql://postgres:${PG_PASS}@postgresql.infra.svc.cluster.local:5432/postgres" -c "SELECT version();" >/dev/null 2>&1; then
-                        echo "[ERROR] ❌ Cannot connect to PostgreSQL inside cluster (postgresql.infra.svc.cluster.local:5432)"
-                        echo "[INFO] Trying NodePort (${MASTER_IP}:30432) as fallback..."
-                        if ! psql "postgresql://postgres:${PG_PASS}@${MASTER_IP}:30432/postgres" -c "SELECT version();" >/dev/null 2>&1; then
-                            echo "[ERROR] ❌ Cannot connect to PostgreSQL via NodePort either."
-                            exit 1
+                    echo "[INFO] Testing PostgreSQL connection (ClusterIP first)..."
+                    bash -c '
+                        export PGPASSWORD="${PG_PASS}"
+                        if psql "postgresql://postgres:${PG_PASS}@postgresql.infra.svc.cluster.local:5432/postgres" -c "SELECT version();" >/dev/null 2>&1; then
+                            echo "[OK] ✅ PostgreSQL ClusterIP connection successful."
                         else
-                            echo "[OK] ✅ PostgreSQL connection via NodePort successful."
+                            echo "[WARN] ⚠️ ClusterIP connection failed, retrying via NodePort..."
+                            if psql "postgresql://postgres:${PG_PASS}@${MASTER_IP}:30432/postgres" -c "SELECT version();" >/dev/null 2>&1; then
+                                echo "[OK] ✅ PostgreSQL NodePort connection successful."
+                            else
+                                echo "[ERROR] ❌ Cannot connect to PostgreSQL (ClusterIP & NodePort failed)."
+                                exit 1
+                            fi
                         fi
-                    else
-                        echo "[OK] ✅ PostgreSQL connection via ClusterIP successful."
-                    fi
+                    '
                 '''
             }
         }
@@ -78,7 +77,7 @@ pipeline {
 
         stage('Validate Helm Releases') {
             steps {
-                echo "📦 Checking Helm and Kubernetes status..."
+                echo "📦 Checking Helm & Kubernetes status..."
                 sh '''
                     echo "[INFO] Helm releases:"
                     helm list -A
@@ -90,13 +89,10 @@ pipeline {
 
         stage('PostgreSQL Backup Check') {
             steps {
-                echo "💾 Verifying scheduled PostgreSQL backups..."
+                echo "💾 Verifying PostgreSQL backup CronJob..."
                 sh '''
-                    echo "[INFO] Checking if PostgreSQL backup CronJob exists..."
-                    kubectl -n infra get cronjob postgresql-backup || echo "[WARN] No backup CronJob found."
-
-                    echo "[INFO] Checking backup jobs..."
-                    kubectl -n infra get jobs | grep postgresql-backup || echo "[WARN] No backup jobs found yet."
+                    kubectl -n infra get cronjob postgresql-backup || echo "[WARN] No PostgreSQL backup CronJob found."
+                    kubectl -n infra get jobs | grep postgresql-backup || echo "[INFO] No backup jobs have run yet."
                 '''
             }
         }

@@ -8,7 +8,6 @@ terraform.tfstate*
 
 # Local work
 .work/
-terraform.tfvars
 
 # Editor/OS
 .DS_Store

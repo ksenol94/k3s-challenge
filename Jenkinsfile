@@ -54,14 +54,17 @@ pipeline {
                         echo "[INFO] Listing Redis pods..."
                         kubectl -n infra get pods -l app=redis
 
-                        echo "[INFO] Testing Redis connection..."
-                        if redis-cli -h redis.infra.svc.cluster.local -p 6379 -a '${REDIS_PASS}' PING | grep -q "PONG"; then
-                            echo "[OK] ✅ Redis connection via ClusterIP successful."
-                        elif redis-cli -h ${MASTER_IP} -p 30379 -a '${REDIS_PASS}' PING | grep -q "PONG"; then
-                            echo "[OK] ✅ Redis connection via NodePort successful."
+                        echo "[INFO] Testing Redis via ClusterIP..."
+                        if redis-cli -h redis.infra.svc.cluster.local -p 6379 -a ${REDIS_PASS} PING | grep PONG >/dev/null 2>&1; then
+                            echo "[OK] ✅ Redis ClusterIP connection successful."
                         else
-                            echo "[ERROR] ❌ Redis connection failed (ClusterIP + NodePort)."
-                            exit 1
+                            echo "[WARN] ⚠️ ClusterIP connection failed, retrying via NodePort..."
+                            if redis-cli -h ${MASTER_IP} -p 30379 -a ${REDIS_PASS} PING | grep PONG >/dev/null 2>&1; then
+                                echo "[OK] ✅ Redis NodePort connection successful."
+                            else
+                                echo "[ERROR] ❌ Redis connection failed (ClusterIP + NodePort)."
+                                exit 1
+                            fi
                         fi
                     """
                 }

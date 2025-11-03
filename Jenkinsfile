@@ -3,25 +3,9 @@ pipeline {
 
     environment {
         TFVARS_PATH = "${WORKSPACE}/terraform.tfvars"
-
-        PG_PASS = sh(
-            script: "grep postgres_password ${TFVARS_PATH} | awk -F'=' '{print \$2}' | tr -d '[:space:]'",
-            returnStdout: true
-        ).trim()
-
-        REDIS_PASS = sh(
-            script: "grep redis_password ${TFVARS_PATH} | awk -F'=' '{print \$2}' | tr -d '[:space:]'",
-            returnStdout: true
-        ).trim()
-
-        MASTER_IP = sh(
-            script: "grep ip ${TFVARS_PATH} | head -1 | awk -F'=' '{print \$2}' | tr -d '[:space:]|\"'",
-            returnStdout: true
-        ).trim()
     }
 
     stages {
-
         stage('Init') {
             steps {
                 echo "✅ Jenkins CI initialized"
@@ -32,13 +16,17 @@ pipeline {
         stage('Verify PostgreSQL') {
             steps {
                 echo "🔍 Checking PostgreSQL connection..."
-                sh '''
-                    echo "[INFO] Listing PostgreSQL pods..."
-                    kubectl -n infra get pods -l app=postgresql
+                script {
+                    def PG_PASS = sh(script: "grep postgres_password ${TFVARS_PATH} | awk -F'=' '{print \$2}' | tr -d '[:space:]'", returnStdout: true).trim()
+                    def MASTER_IP = sh(script: "grep ip ${TFVARS_PATH} | head -1 | awk -F'=' '{print \$2}' | tr -d '[:space:]|\"'", returnStdout: true).trim()
 
-                    echo "[INFO] Testing PostgreSQL connection (ClusterIP first)..."
-                    bash -c '
-                        export PGPASSWORD="${PG_PASS}"
+                    sh """
+                        echo "[INFO] Listing PostgreSQL pods..."
+                        kubectl -n infra get pods -l app=postgresql
+
+                        echo "[INFO] Testing PostgreSQL connection (ClusterIP first)..."
+                        export PGPASSWORD='${PG_PASS}'
+
                         if psql "postgresql://postgres:${PG_PASS}@postgresql.infra.svc.cluster.local:5432/postgres" -c "SELECT version();" >/dev/null 2>&1; then
                             echo "[OK] ✅ PostgreSQL ClusterIP connection successful."
                         else
@@ -50,28 +38,33 @@ pipeline {
                                 exit 1
                             fi
                         fi
-                    '
-                '''
+                    """
+                }
             }
         }
 
         stage('Verify Redis') {
             steps {
                 echo "🔍 Checking Redis connection..."
-                sh '''
-                    echo "[INFO] Listing Redis pods..."
-                    kubectl -n infra get pods -l app=redis
+                script {
+                    def REDIS_PASS = sh(script: "grep redis_password ${TFVARS_PATH} | awk -F'=' '{print \$2}' | tr -d '[:space:]'", returnStdout: true).trim()
+                    def MASTER_IP = sh(script: "grep ip ${TFVARS_PATH} | head -1 | awk -F'=' '{print \$2}' | tr -d '[:space:]|\"'", returnStdout: true).trim()
 
-                    echo "[INFO] Testing Redis connection..."
-                    if redis-cli -h redis.infra.svc.cluster.local -p 6379 -a "${REDIS_PASS}" PING | grep -q "PONG"; then
-                        echo "[OK] ✅ Redis connection via ClusterIP successful."
-                    elif redis-cli -h ${MASTER_IP} -p 30379 -a "${REDIS_PASS}" PING | grep -q "PONG"; then
-                        echo "[OK] ✅ Redis connection via NodePort successful."
-                    else
-                        echo "[ERROR] ❌ Redis connection failed (ClusterIP + NodePort)."
-                        exit 1
-                    fi
-                '''
+                    sh """
+                        echo "[INFO] Listing Redis pods..."
+                        kubectl -n infra get pods -l app=redis
+
+                        echo "[INFO] Testing Redis connection..."
+                        if redis-cli -h redis.infra.svc.cluster.local -p 6379 -a '${REDIS_PASS}' PING | grep -q "PONG"; then
+                            echo "[OK] ✅ Redis connection via ClusterIP successful."
+                        elif redis-cli -h ${MASTER_IP} -p 30379 -a '${REDIS_PASS}' PING | grep -q "PONG"; then
+                            echo "[OK] ✅ Redis connection via NodePort successful."
+                        else
+                            echo "[ERROR] ❌ Redis connection failed (ClusterIP + NodePort)."
+                            exit 1
+                        fi
+                    """
+                }
             }
         }
 

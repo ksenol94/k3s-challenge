@@ -1,5 +1,0 @@
-apiVersion: v2
-name: jenkins
-description: Local Jenkins deployment for DevOps Challenge
-version: 0.1.0
-appVersion: "2.479"

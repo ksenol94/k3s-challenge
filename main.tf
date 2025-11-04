@@ -16,11 +16,14 @@ module "k3s" {
 module "helm" {
   source = "./modules/helm"
 
-  redis_password     = var.redis_password
-  jenkins_user = var.jenkins_user
-  jenkins_password = var.jenkins_password
-  postgres_user      = var.postgres_user
-  postgres_password  = var.postgres_password
+  redis_password    = var.redis_password
+  jenkins_user      = var.jenkins_user
+  jenkins_password  = var.jenkins_password
+  postgres_user     = var.postgres_user
+  postgres_password = var.postgres_password
+  master_ip         = module.k3s.master_ip
+  instances         = var.instances
+
 
   providers = {
     kubernetes = kubernetes

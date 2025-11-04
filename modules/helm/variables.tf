@@ -27,3 +27,19 @@ variable "postgres_password" {
   sensitive   = true
   description = "PostgreSQL password"
 }
+
+variable "master_ip" {
+  description = "K3s master node IP address"
+  type        = string
+}
+
+variable "instances" {
+  description = "List of VM instances (master and workers)"
+  type = list(object({
+    name        = string
+    ip          = string
+    ssh_user    = string
+    private_key = string
+    role        = string # must be 'master' or 'worker'
+  }))
+}

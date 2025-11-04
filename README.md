@@ -1,6 +1,6 @@
 Local Kubernetes (K3s) DevOps Infrastructure
 
-This project automates the setup of a local Kubernetes (K3s) cluster using OpenTofu (Terraform), Helm, Jenkins, Postgre and Redis.
+This project automates the setup of a local Kubernetes (K3s) cluster (1 master and 1 worker) using OpenTofu (Terraform), Helm, Jenkins, Postgre, Local Container Registry and Redis.
 
 I used ChatGPT Pro Plan for helper AI Tool.
 
@@ -15,7 +15,7 @@ Overview
 Requirements
 
 -	Ubuntu virtual machines (1 master minimum).
--	SSH key for accessing VMs.
+-	SSH key (Public and Private Key) for accessing VMs. Public Key must be added into VMs before start.
 -	OpenTofu (Terraform) for infrastructure provisioning.
 -	kubectl and Helm CLI for Kubernetes management.
 -	psql and redis-cli for external connection testing.

@@ -44,3 +44,14 @@ variable "jenkins_password" {
   type        = string
   sensitive   = true
 }
+
+# variable "git_username" {
+#   description = "Git username for Jenkins credential injection"
+#   type        = string
+# }
+
+# variable "git_password" {
+#   description = "Git password or token for Jenkins credential injection"
+#   type        = string
+#   sensitive   = true
+# }

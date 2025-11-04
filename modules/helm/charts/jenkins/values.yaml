@@ -1,24 +1,73 @@
-image:
-  repository: jenkins/jenkins
-  tag: 2.479-jdk17
-  pullPolicy: IfNotPresent
+controller:
+  image:
+    repository: jenkins-with-tools
+    tag: lts
+    pullPolicy: IfNotPresent
 
-service:
-  type: NodePort
-  port: 8080
+  admin:
+    username: ${jenkins_user}
+    password: ${jenkins_password}
+
+  serviceType: NodePort
+  servicePort: 8080
   nodePort: 32000
 
-auth:
-  adminUser: ""
-  adminPassword: ""
+  JCasC:
+    defaultConfig: false
+    configScripts:
+      custom: |-
+        jenkins:
+          systemMessage: "Managed by Terraform + Helm + JCasC"
+          numExecutors: 2
 
-installPlugins:
-  - git:5.5.2
-  - workflow-aggregator:596.v8c21c963d92d
-  - pipeline-model-definition:2.2251.vb_921a_28a_f147
-  - pipeline-stage-view:2.33
-  - blueocean:1.27.13
-  - credentials-binding:681.vf91669a_32e45
-  - docker-workflow:572.v950f58993843
-  - timestamper:1.26
-  - job-dsl:1.89
+          securityRealm:
+            local:
+              allowsSignup: false
+              users:
+                - id: "${jenkins_user}"
+                  password: "${jenkins_password}"
+
+          authorizationStrategy:
+            loggedInUsersCanDoAnything:
+              allowAnonymousRead: false
+
+        credentials:
+          system:
+            domainCredentials:
+              - credentials:
+                  - usernamePassword:
+                      scope: GLOBAL
+                      id: "git-creds"
+                      username: "git"
+                      password: "git123"
+                      description: "Git credentials for pipelines"
+
+        unclassified:
+          location:
+            url: "http://jenkins.apps.svc.cluster.local:8080/"
+
+  runAsUser: 0
+  fsGroup: 0
+  securityContext:
+    runAsUser: 0
+    fsGroup: 0
+
+  installPlugins:
+    - workflow-aggregator
+    - git
+    - credentials
+    - credentials-binding
+    - configuration-as-code
+    - job-dsl
+    - blueocean
+    - kubernetes
+    - matrix-auth
+    - command-launcher
+    - timestamper
+
+  nodeSelector:
+    node-role.kubernetes.io/master: "true"
+  tolerations:
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule

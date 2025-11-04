@@ -2,14 +2,14 @@
 instances = [
   {
     name        = "master-node-new"
-    ip          = "192.168.64.24"
+    ip          = "192.168.64.5"
     ssh_user    = "ubuntu"
     private_key = "~/.ssh/vm1_id_rsa"
     role        = "master"
   },
   {
     name        = "worker-node"
-    ip          = "192.168.64.23"
+    ip          = "192.168.64.6"
     ssh_user    = "ubuntu"
     private_key = "~/.ssh/vm1_id_rsa"
     role        = "worker"
